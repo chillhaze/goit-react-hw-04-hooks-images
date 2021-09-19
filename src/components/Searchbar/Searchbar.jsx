@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import { FaQuestionCircle } from 'react-icons/fa';
 
 export const Searchbar = ({ onSubmit }) => {
   const [searchItem, setSearchItem] = useState('');
@@ -15,7 +16,17 @@ export const Searchbar = ({ onSubmit }) => {
   const handleSubmit = e => {
     e.preventDefault();
     if (searchItem.trim() === '') {
-      toast.error('empty field');
+      toast.error(
+        'empty field',
+        {
+          icon: <FaQuestionCircle style={{ fill: '#3f51b5' }} />,
+        },
+        {
+          style: {
+            backgroundColor: '#e3d120f2',
+          },
+        },
+      );
       return;
     }
     onSubmit(searchItem);

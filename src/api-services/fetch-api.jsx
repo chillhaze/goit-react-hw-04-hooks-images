@@ -15,7 +15,7 @@
 
 const BASE_URL = 'https://pixabay.com/api/';
 const API_KEY = '22569115-02a432c6c1c62bbb3a59801b7';
-const PER_PAGE = 12;
+export const PER_PAGE = 12;
 
 export const fetchItems = (searchItem, page = 1) => {
   return fetch(

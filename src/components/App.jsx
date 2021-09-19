@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchItems } from '../api-services/fetch-api';
+import { fetchItems, PER_PAGE } from '../api-services/fetch-api';
 import { Searchbar } from './Searchbar';
 import { ImageGallery } from './ImageGallery';
 import { Button } from './Button/Button';
@@ -20,98 +20,61 @@ export const App = () => {
   const [selectedImageTag, setSelectedImageTag] = useState(null);
 
   useEffect(() => {
-    // Фетч по поиску
-    if (searchItem !== '' && page === 1) {
-      setStatus('pending');
-      setPage(1);
-
-      fetchItems(searchItem, page)
-        .then(response => {
-          if (response.ok) {
-            return response.json();
-          }
-
-          toast.error('something went wrong');
-          return Promise.reject(
-            new Error(`search '${searchItem}' returned with error`),
-          );
-        })
-        .then(data => {
-          const { hits, totalHits } = data;
-          if (hits.length === 0) {
-            toast.error('no images');
-            setSearchResult([]);
-            setStatus('idle');
-          } else if (hits.length > 0) {
-            toast.success(`${totalHits} images found`);
-            setSearchResult(hits);
-          }
-
-          return setStatus('resolved');
-        })
-        .catch(error => {
-          setError(error);
-          setStatus('rejected');
-        });
+    // отмена первого фетча
+    if (searchItem === '') {
+      return;
     }
+    setStatus('pending');
+    // setPage(1);
 
-    return;
-  }, [searchItem]);
+    fetchItems(searchItem, page)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
 
-  useEffect(() => {
-    // Фетч по нажатию Load more
-    if (page > 1) {
-      setStatus('pending');
+        toast.error('something went wrong');
+        return Promise.reject(
+          new Error(`search '${searchItem}' returned with error`),
+        );
+      })
+      .then(data => {
+        const { hits, totalHits } = data;
 
-      fetchItems(searchItem, page)
-        .then(response => {
-          if (response.ok) {
-            return response.json();
-          }
-          toast.error('something went wrong');
-          return Promise.reject(
-            new Error(`search '${searchItem}' returned with error`),
-          );
-        })
-        .then(data => {
-          const { hits } = data;
+        // Фетч по поиску
+        if (page === 1 && hits.length !== 0 && searchItem !== '') {
+          toast.success(`${totalHits} images found`);
+          setSearchResult(hits);
+          setStatus('resolved');
+          return;
 
-          if (hits.length === 0) {
-            toast.error('no more images found');
-            setSearchResult([]);
-            setSearchItem('');
-            setStatus('idle');
-            setPage(1);
-
-            return;
-          }
-          toast.success('more images found');
+          // Фетч по нажатию на кнопку Load more
+        } else if (page > 1 && hits.length !== 0) {
+          toast.success(`more images found`);
           setSearchResult(prevState => [...prevState, ...hits]);
           setStatus('resolved');
           scrollDown();
-
           return;
-        })
-        .catch(error => {
-          setError(error);
-          setStatus('rejected');
-        });
-    }
-  }, [page]);
+        }
+        // Если отрицательный результат поиска
+        toast.error('no images');
+        setSearchResult([]);
+        setSearchItem('');
+        setPage(1);
+        setStatus('idle');
+      })
+      .catch(error => {
+        setError(error);
+        setStatus('rejected');
+      });
+
+    return;
+  }, [searchItem, page]);
 
   // Передаю в стейт текст поиска
   const handleFormSubmit = searchQuery => {
     setSearchItem(searchQuery);
     setPage(1);
-  };
-
-  // Передаю в стейт результат поиска
-  const handleSearchResult = querryResult => {
-    if (querryResult.length === 0) {
-      setSearchResult(null);
-    } else {
-      setSearchResult(querryResult);
-    }
   };
 
   // Передаю в стейт информацию для модального окна
@@ -140,7 +103,7 @@ export const App = () => {
     });
   };
 
-  const showBtn = searchResult.length > 0 && status !== 'idle';
+  const showBtn = searchResult.length > PER_PAGE - 1 && status !== 'idle';
 
   return (
     <div>
@@ -181,36 +144,3 @@ export const App = () => {
     </div>
   );
 };
-
-// setStatus('pending');
-// setPage(1);
-
-// fetchItems(searchItem, page)
-//   .than(response => {
-//     console.log(response);
-//     if (response.ok) {
-//       return response.json();
-//     }
-
-//     toast.error('something went wrong');
-//     return Promise.reject(
-//       new Error(`search '${searchItem}' returned with error`),
-//     );
-//   })
-//   .than(data => {
-//     const { hits, totalHits } = data;
-//     if (hits.length === 0) {
-//       toast.error('no images');
-//       setSearchResult([]);
-//       setStatus('idle');
-//     } else if (hits.length > 0) {
-//       toast.success(`${totalHits} images found`);
-//       setSearchResult(hits);
-//     }
-
-//     return setStatus('resolved');
-//   })
-//   .catch(error => {
-//     setError(error);
-//     setStatus('rejected');
-//   });
